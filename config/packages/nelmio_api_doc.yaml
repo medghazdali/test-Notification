@@ -1,0 +1,25 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: 'Notification API'
+            description: 'API for managing users and notifications with enum-based status system'
+            version: '1.0.0'
+            contact:
+                name: 'API Support'
+                email: 'support@example.com'
+        servers:
+            - url: 'http://127.0.0.1:8000'
+              description: 'Development server'
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            - bearerAuth: []
+    areas:
+        path_patterns:
+            - ^/api(?!/doc)
+    models:
+        use_jms: false
