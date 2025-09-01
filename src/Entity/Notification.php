@@ -19,12 +19,10 @@ class Notification
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'notifications')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user = null;
 
-    #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Email]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $recipientEmail = null;
 
     #[ORM\Column(length: 255)]
@@ -48,6 +46,10 @@ class Notification
 
     #[ORM\OneToMany(mappedBy: 'notification', targetEntity: NotificationAttachment::class, orphanRemoval: true)]
     private Collection $attachments;
+
+    #[ORM\ManyToOne(inversedBy: 'notifications')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?EmailTemplate $emailTemplate = null;
 
     public function __construct()
     {
@@ -78,7 +80,7 @@ class Notification
         return $this->recipientEmail;
     }
 
-    public function setRecipientEmail(string $recipientEmail): static
+    public function setRecipientEmail(?string $recipientEmail): static
     {
         $this->recipientEmail = $recipientEmail;
 
@@ -171,6 +173,18 @@ class Notification
                 $attachment->setNotification(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getEmailTemplate(): ?EmailTemplate
+    {
+        return $this->emailTemplate;
+    }
+
+    public function setEmailTemplate(?EmailTemplate $emailTemplate): static
+    {
+        $this->emailTemplate = $emailTemplate;
 
         return $this;
     }

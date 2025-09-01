@@ -20,22 +20,25 @@ class NotificationAttachment
     #[ORM\JoinColumn(nullable: false)]
     private ?Notification $notification = null;
 
+    #[ORM\Column(length: 500)]
+    #[Assert\NotBlank]
+    private ?string $filePath = null;
+
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    private ?string $filename = null;
+    private ?string $fileName = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
     private ?string $mimeType = null;
 
-    #[ORM\Column(type: Types::BIGINT)]
-    #[Assert\NotBlank]
-    #[Assert\PositiveOrZero]
-    private ?int $sizeBytes = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(length: 500)]
-    #[Assert\NotBlank]
-    private ?string $storagePath = null;
+    public function __construct()
+    {
+        $this->createdAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -54,14 +57,26 @@ class NotificationAttachment
         return $this;
     }
 
-    public function getFilename(): ?string
+    public function getFilePath(): ?string
     {
-        return $this->filename;
+        return $this->filePath;
     }
 
-    public function setFilename(string $filename): static
+    public function setFilePath(string $filePath): static
     {
-        $this->filename = $filename;
+        $this->filePath = $filePath;
+
+        return $this;
+    }
+
+    public function getFileName(): ?string
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(string $fileName): static
+    {
+        $this->fileName = $fileName;
 
         return $this;
     }
@@ -78,26 +93,14 @@ class NotificationAttachment
         return $this;
     }
 
-    public function getSizeBytes(): ?int
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->sizeBytes;
+        return $this->createdAt;
     }
 
-    public function setSizeBytes(int $sizeBytes): static
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
-        $this->sizeBytes = $sizeBytes;
-
-        return $this;
-    }
-
-    public function getStoragePath(): ?string
-    {
-        return $this->storagePath;
-    }
-
-    public function setStoragePath(string $storagePath): static
-    {
-        $this->storagePath = $storagePath;
+        $this->createdAt = $createdAt;
 
         return $this;
     }

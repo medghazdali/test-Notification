@@ -2,34 +2,37 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
+use App\Repository\EmailTemplateRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'users')]
-class User
+#[ORM\Entity(repositoryClass: EmailTemplateRepository::class)]
+#[ORM\Table(name: 'email_templates')]
+class EmailTemplate
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, unique: true)]
-    #[Assert\NotBlank]
-    #[Assert\Email]
-    private ?string $email = null;
-
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    private ?string $firstName = null;
+    private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 500)]
     #[Assert\NotBlank]
-    private ?string $lastName = null;
+    private ?string $subjectTemplate = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    private ?string $htmlBodyTemplate = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    private ?string $plainTextBodyTemplate = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -37,7 +40,7 @@ class User
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Notification::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'emailTemplate', targetEntity: Notification::class)]
     private Collection $notifications;
 
     public function __construct()
@@ -52,38 +55,50 @@ class User
         return $this->id;
     }
 
-    public function getEmail(): ?string
+    public function getName(): ?string
     {
-        return $this->email;
+        return $this->name;
     }
 
-    public function setEmail(string $email): static
+    public function setName(string $name): static
     {
-        $this->email = $email;
+        $this->name = $name;
 
         return $this;
     }
 
-    public function getFirstName(): ?string
+    public function getSubjectTemplate(): ?string
     {
-        return $this->firstName;
+        return $this->subjectTemplate;
     }
 
-    public function setFirstName(string $firstName): static
+    public function setSubjectTemplate(string $subjectTemplate): static
     {
-        $this->firstName = $firstName;
+        $this->subjectTemplate = $subjectTemplate;
 
         return $this;
     }
 
-    public function getLastName(): ?string
+    public function getHtmlBodyTemplate(): ?string
     {
-        return $this->lastName;
+        return $this->htmlBodyTemplate;
     }
 
-    public function setLastName(string $lastName): static
+    public function setHtmlBodyTemplate(string $htmlBodyTemplate): static
     {
-        $this->lastName = $lastName;
+        $this->htmlBodyTemplate = $htmlBodyTemplate;
+
+        return $this;
+    }
+
+    public function getPlainTextBodyTemplate(): ?string
+    {
+        return $this->plainTextBodyTemplate;
+    }
+
+    public function setPlainTextBodyTemplate(string $plainTextBodyTemplate): static
+    {
+        $this->plainTextBodyTemplate = $plainTextBodyTemplate;
 
         return $this;
     }
@@ -124,7 +139,7 @@ class User
     {
         if (!$this->notifications->contains($notification)) {
             $this->notifications->add($notification);
-            $notification->setUser($this);
+            $notification->setEmailTemplate($this);
         }
 
         return $this;
@@ -134,8 +149,8 @@ class User
     {
         if ($this->notifications->removeElement($notification)) {
             // set the owning side to null (unless already changed)
-            if ($notification->getUser() === $this) {
-                $notification->setUser(null);
+            if ($notification->getEmailTemplate() === $this) {
+                $notification->setEmailTemplate(null);
             }
         }
 
