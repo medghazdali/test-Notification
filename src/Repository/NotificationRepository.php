@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Notification;
+use App\Enum\NotificationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -34,9 +35,24 @@ class NotificationRepository extends ServiceEntityRepository
         }
     }
 
-    public function findByStatus(string $status): array
+    public function findByStatus(NotificationStatus $status): array
     {
         return $this->findBy(['status' => $status]);
+    }
+
+    public function findPendingNotifications(): array
+    {
+        return $this->findByStatus(NotificationStatus::PENDING);
+    }
+
+    public function findSentNotifications(): array
+    {
+        return $this->findByStatus(NotificationStatus::SENT);
+    }
+
+    public function findFailedNotifications(): array
+    {
+        return $this->findByStatus(NotificationStatus::FAILED);
     }
 
     public function findByUser(int $userId): array

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\NotificationStatus;
 use App\Repository\NotificationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -33,10 +34,8 @@ class Notification
     #[Assert\NotBlank]
     private ?string $body = null;
 
-    #[ORM\Column(length: 50)]
-    #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['pending', 'sent', 'failed', 'delivered'])]
-    private ?string $status = null;
+    #[ORM\Column(length: 50, enumType: NotificationStatus::class)]
+    private ?NotificationStatus $status = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -55,7 +54,7 @@ class Notification
     {
         $this->attachments = new ArrayCollection();
         $this->createdAt = new \DateTime();
-        $this->status = 'pending';
+        $this->status = NotificationStatus::PENDING;
     }
 
     public function getId(): ?int
@@ -111,12 +110,12 @@ class Notification
         return $this;
     }
 
-    public function getStatus(): ?string
+    public function getStatus(): ?NotificationStatus
     {
         return $this->status;
     }
 
-    public function setStatus(string $status): static
+    public function setStatus(NotificationStatus $status): static
     {
         $this->status = $status;
 
