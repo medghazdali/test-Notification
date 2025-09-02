@@ -25,6 +25,11 @@ class CreateNotificationRequest
     #[Assert\Positive(message: 'Email template ID must be positive')]
     public ?int $emailTemplateId = null;
 
+    /**
+     * @var array<array{file_name: string, mime_type: string, file_path: string}>
+     */
+    public array $attachments = [];
+
     public function __construct(array $data = [])
     {
         $this->subject = $data['subject'] ?? null;
@@ -32,6 +37,7 @@ class CreateNotificationRequest
         $this->userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
         $this->recipientEmail = $data['recipient_email'] ?? null;
         $this->emailTemplateId = isset($data['email_template_id']) ? (int) $data['email_template_id'] : null;
+        $this->attachments = $data['attachments'] ?? [];
     }
 
     public function hasRecipient(): bool

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\DTO\CreateNotificationRequest;
 use App\DTO\NotificationResponse;
+use App\DTO\SendNotificationRequest;
 use App\Service\NotificationService;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,15 +38,36 @@ class NotificationController extends AbstractController
                 new OA\Property(property: 'body', type: 'string', description: 'Notification body content'),
                 new OA\Property(property: 'user_id', type: 'integer', description: 'ID of the user (optional)'),
                 new OA\Property(property: 'recipient_email', type: 'string', format: 'email', description: 'Recipient email address (optional)'),
-                new OA\Property(property: 'email_template_id', type: 'integer', description: 'ID of the email template (optional)')
+                new OA\Property(property: 'email_template_id', type: 'integer', description: 'ID of the email template to link with this notification (optional). Links notification to a pre-defined template for consistent branding and template usage tracking.'),
+                new OA\Property(
+                    property: 'attachments',
+                    type: 'array',
+                    description: 'Array of attachments (optional)',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'file_name', type: 'string', description: 'Original file name'),
+                            new OA\Property(property: 'mime_type', type: 'string', description: 'File MIME type'),
+                            new OA\Property(property: 'file_path', type: 'string', description: 'Storage path of the file')
+                        ]
+                    )
+                )
             ],
             example: [
                 'subject' => 'Welcome to Our Service',
                 'body' => 'Thank you for joining our service!',
-                'user_id' => 1
+                'user_id' => 1,
+                'email_template_id' => 1,
+                'attachments' => [
+                    [
+                        'file_name' => 'welcome_guide.pdf',
+                        'mime_type' => 'application/pdf',
+                        'file_path' => '/uploads/attachments/welcome_guide_123.pdf'
+                    ]
+                ]
             ]
         )
     )]
+
     #[OA\Response(
         response: 201,
         description: 'Notification created successfully',
@@ -126,7 +148,7 @@ class NotificationController extends AbstractController
     #[OA\Post(
         path: '/api/notifications/{id}/send',
         summary: 'Send a notification',
-        description: 'Simulates sending a notification. Changes status from pending to sent and sets sent_at timestamp.',
+        description: 'Simulates sending a notification. Changes status from pending to sent and sets sent_at timestamp. Can optionally add attachments during sending.',
         tags: ['Notifications']
     )]
     #[OA\Parameter(
@@ -135,6 +157,34 @@ class NotificationController extends AbstractController
         description: 'Notification ID',
         required: true,
         schema: new OA\Schema(type: 'integer')
+    )]
+    #[OA\RequestBody(
+        required: false,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(
+                    property: 'attachments',
+                    type: 'array',
+                    description: 'Array of attachments to add during sending (optional)',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'file_name', type: 'string', description: 'Original file name'),
+                            new OA\Property(property: 'mime_type', type: 'string', description: 'File MIME type'),
+                            new OA\Property(property: 'file_path', type: 'string', description: 'Storage path of the file')
+                        ]
+                    )
+                )
+            ],
+            example: [
+                'attachments' => [
+                    [
+                        'file_name' => 'invoice.pdf',
+                        'mime_type' => 'application/pdf',
+                        'file_path' => '/uploads/attachments/invoice_456.pdf'
+                    ]
+                ]
+            ]
+        )
     )]
     #[OA\Response(
         response: 200,
@@ -160,9 +210,12 @@ class NotificationController extends AbstractController
     )]
     #[OA\Response(response: 400, description: 'Bad request - notification cannot be sent')]
     #[OA\Response(response: 404, description: 'Notification not found')]
-    public function send(int $id): JsonResponse
+    public function send(int $id, Request $request): JsonResponse
     {
-        $notificationResponse = $this->notificationService->sendNotification($id);
+        $data = json_decode($request->getContent(), true);
+        $sendRequest = $data ? new SendNotificationRequest($data) : null;
+        
+        $notificationResponse = $this->notificationService->sendNotification($id, $sendRequest);
         $responseData = $notificationResponse->toArray();
         $responseData['message'] = 'Notification sent successfully';
 

@@ -2,6 +2,8 @@
 
 namespace App\EventListener;
 
+use App\Exception\EmailTemplateException;
+use App\Exception\NotificationAttachmentException;
 use App\Exception\NotificationException;
 use App\Exception\UserException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,6 +42,12 @@ class ApiExceptionListener
             $message = $exception->getMessage();
         } elseif ($exception instanceof UserException) {
             $statusCode = $this->getStatusCodeForUserException($exception);
+            $message = $exception->getMessage();
+        } elseif ($exception instanceof EmailTemplateException) {
+            $statusCode = $this->getStatusCodeForEmailTemplateException($exception);
+            $message = $exception->getMessage();
+        } elseif ($exception instanceof NotificationAttachmentException) {
+            $statusCode = $this->getStatusCodeForNotificationAttachmentException($exception);
             $message = $exception->getMessage();
         } elseif ($exception instanceof ValidationFailedException) {
             $statusCode = Response::HTTP_BAD_REQUEST;
@@ -80,6 +88,24 @@ class ApiExceptionListener
         return match (true) {
             str_contains($exception->getMessage(), 'not found') => Response::HTTP_NOT_FOUND,
             str_contains($exception->getMessage(), 'already exists') => Response::HTTP_CONFLICT,
+            default => Response::HTTP_BAD_REQUEST,
+        };
+    }
+
+    private function getStatusCodeForEmailTemplateException(EmailTemplateException $exception): int
+    {
+        return match (true) {
+            str_contains($exception->getMessage(), 'not found') => Response::HTTP_NOT_FOUND,
+            str_contains($exception->getMessage(), 'already exists') => Response::HTTP_CONFLICT,
+            str_contains($exception->getMessage(), 'cannot delete') => Response::HTTP_BAD_REQUEST,
+            default => Response::HTTP_BAD_REQUEST,
+        };
+    }
+
+    private function getStatusCodeForNotificationAttachmentException(NotificationAttachmentException $exception): int
+    {
+        return match (true) {
+            str_contains($exception->getMessage(), 'not found') => Response::HTTP_NOT_FOUND,
             default => Response::HTTP_BAD_REQUEST,
         };
     }

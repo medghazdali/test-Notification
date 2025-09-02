@@ -4,12 +4,14 @@ namespace App\Service;
 
 use App\DTO\CreateNotificationRequest;
 use App\DTO\NotificationResponse;
+use App\DTO\SendNotificationRequest;
 use App\Entity\EmailTemplate;
 use App\Entity\Notification;
 use App\Entity\User;
 use App\Enum\NotificationStatus;
 use App\Exception\NotificationException;
 use App\Repository\EmailTemplateRepository;
+use App\Repository\NotificationAttachmentRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,7 +24,8 @@ class NotificationService
         private ValidatorInterface $validator,
         private NotificationRepository $notificationRepository,
         private UserRepository $userRepository,
-        private EmailTemplateRepository $emailTemplateRepository
+        private EmailTemplateRepository $emailTemplateRepository,
+        private NotificationAttachmentRepository $attachmentRepository
     ) {
     }
 
@@ -85,6 +88,11 @@ class NotificationService
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
 
+        // Create attachments if provided
+        if (!empty($request->attachments)) {
+            $this->createAttachmentsForNotification($notification, $request->attachments);
+        }
+
         return NotificationResponse::fromEntity($notification);
     }
 
@@ -118,7 +126,7 @@ class NotificationService
         );
     }
 
-    public function sendNotification(int $id): NotificationResponse
+    public function sendNotification(int $id, ?SendNotificationRequest $sendRequest = null): NotificationResponse
     {
         $notification = $this->notificationRepository->find($id);
         if (!$notification) {
@@ -141,6 +149,11 @@ class NotificationService
         // 8. Rate limiting and throttling
         // 9. Audit logging
         // 10. Webhook notifications
+
+        // Add attachments if provided during sending
+        if ($sendRequest && $sendRequest->hasAttachments()) {
+            $this->createAttachmentsForNotification($notification, $sendRequest->attachments);
+        }
 
         $notification->setStatus(NotificationStatus::SENT);
         $notification->setSentAt(new \DateTime());
@@ -168,5 +181,20 @@ class NotificationService
             fn(Notification $notification) => NotificationResponse::fromEntity($notification),
             $notifications
         );
+    }
+
+    private function createAttachmentsForNotification(Notification $notification, array $attachments): void
+    {
+        foreach ($attachments as $attachmentData) {
+            $attachment = new \App\Entity\NotificationAttachment();
+            $attachment->setNotification($notification);
+            $attachment->setFileName($attachmentData['file_name']);
+            $attachment->setMimeType($attachmentData['mime_type']);
+            $attachment->setFilePath($attachmentData['file_path']);
+
+            $this->entityManager->persist($attachment);
+        }
+        
+        $this->entityManager->flush();
     }
 }

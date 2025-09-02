@@ -34,8 +34,8 @@ class NotificationAttachmentRepository extends ServiceEntityRepository
         }
     }
 
-    public function findByNotification(int $notificationId): array
+    public function findByNotification($notification): array
     {
-        return $this->findBy(['notification' => $notificationId]);
+        return $this->findBy(['notification' => $notification]);
     }
 }
