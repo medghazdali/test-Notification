@@ -473,4 +473,7 @@ tests/
 - ✅ **Type Safety** with enums and validation
 - ✅ **RESTful API Design** following best practices
 
+<img width="3426" height="3050" alt="image" src="https://github.com/user-attachments/assets/97e61359-3af3-4e6e-b848-d5b01775cf02" />
+
+
 
